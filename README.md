@@ -38,3 +38,6 @@ Locker management system for Arduino-controlled smart locker.
 - Connect 4x4 keypad pins (Row1 to Col4) to Arduino pins 13 to 6  
 - Connect an LCD with I2C module to analog pins A5 (SCL) and A4 (SDA)  
 - Connect a potentiometer to pin A3; place it below the hinges of the door so it rotates with the door to detect if the door is closed or open
+
+# Contact  
+You can reach me at: [alishouman2006@gmail.com](mailto:alishouman2006@gmail.com)
