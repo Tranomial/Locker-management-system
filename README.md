@@ -20,7 +20,7 @@ Locker management system for Arduino-controlled smart locker.
 - **B**: Erase last inserted character  
 - **C**: Change password (only works if you have access)  
 - **D**: Lock safe (only works if you have access and safe door is closed)  
-- ***:** Toggle mute (alarm sound can't be muted)  
+- ***:** Toggle mute for keypad sounds (alarm sound can't be muted)  
 - **#**: Confirm input  
 
 ## Technologies Used  
