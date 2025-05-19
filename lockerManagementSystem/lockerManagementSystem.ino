@@ -141,15 +141,18 @@ void takeInput()  // Takes input from user and stores it or acts upon it
   {
     if(key == 'A' && mode != 1)  // A clears user input
     {
-      if(!isSilent && !isAlarm)
-        tone(buzz , 500 , 200);
+      if(indx > 0)
+      {
+        if(!isSilent && !isAlarm)
+          tone(buzz , 500 , 200);
       
-      charClear(input , indx);
+        charClear(input , indx);
+      }
     }
     
     else if(key == 'B'  && mode != 1)  // B erases last character from user input
     {
-      if (indx > 0)
+      if(indx > 0)
       {
         if(!isSilent && !isAlarm)
           tone(buzz , 500 , 200);
@@ -162,7 +165,7 @@ void takeInput()  // Takes input from user and stores it or acts upon it
     {
       if(mode != 0 && mode!= 3)
       {
-        if (!isSilent)
+        if(!isSilent)
           tone(buzz , 500 , 200);
       
         if(mode == 1)
