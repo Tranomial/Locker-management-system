@@ -30,13 +30,13 @@ Keypad kp (makeKeymap(keymap) , rows , cols , 4 , 4);
 byte mode = 0;  // 0 is when in password entery mode
 // 1 is when you have access, 2 is when in password changing mode and mode 3 is when you start the locker for the first time
 
-unsigned long long lockdownTime;  // A variable for calculating lockdown time
+unsigned long lockdownTime;  // A variable for calculating lockdown time
 
-unsigned long long alarmTime;  // A variable for calculating alarm frequency intervals
+unsigned long alarmTime;  // A variable for calculating alarm frequency intervals
 
-unsigned long long lcdUITime;  // A variable for calculating the time for which text will appear on the lcd
+unsigned long lcdUITime;  // A variable for calculating the time for which text will appear on the lcd
 
-unsigned long long lcdUIDuration;  // A variable for the duration that the lcd will have a certain text appear on it
+unsigned long lcdUIDuration;  // A variable for the duration that the lcd will have a certain text appear on it
 
 bool isPasswordLoaded = false;  // A variable that is used once in the program for loading the password from EEPROM
 
@@ -109,7 +109,7 @@ void loop()
 
   else if(mode == 2)
   {
-    lcdUrgentTimedUpdate(1);  // In mode 1 always display "Insert password"
+    lcdUpdateWithDelay(1 , 2000);  // In mode 1 always display "Insert password"
     lockServo.write(unlockAngle);  // Just like in mode 1, the lock should always be open in mode 2
   }
 
@@ -120,7 +120,7 @@ void loop()
   }
   
   if (!isLockdown)  // Take user input if lockdown isn't active
-    takeInput();    
+    takeInput();
 
   if(attempts > 2)  // Innitialize lockdown if failed attepts exceed 2
   {
@@ -196,7 +196,7 @@ void takeInput()  // Takes input from user and stores it or acts upon it
         {
           mode = 1;
           tone(buzz , 1250 , 500);
-          lcdUrgentTimedUpdate(5);
+          lcdUpdateWithDelay(5 , 2000);
         }
     }
     
@@ -218,7 +218,7 @@ void takeInput()  // Takes input from user and stores it or acts upon it
           setPassword(input , password , indx , passwordSize);
           charClear(input , indx);
 
-          lcdUrgentTimedUpdate(6);
+          lcdUpdateWithDelay(6 , 2000);
         }
         else if(mode = 3)
         {
@@ -230,7 +230,7 @@ void takeInput()  // Takes input from user and stores it or acts upon it
           charClear(input , indx);
           
 
-          lcdUrgentTimedUpdate(6);
+          lcdUpdateWithDelay(6 , 2000);
         }
       }
       else
@@ -253,12 +253,10 @@ void takeInput()  // Takes input from user and stores it or acts upon it
     {
       if(indx < 16)
       {
-        if(!isAlarm)
-        {
-          lcdDelayActive = false;
-          if(!isSilent)
+        lcdDelayActive = false;
+
+        if(!isSilent && !isAlarm)
             tone(buzz , 1500 , 50);
-        }
 
       charPushback(input , indx , key);
       }
@@ -341,7 +339,7 @@ void denyAccess()  // If the user enters the wrong password, this function is ca
   attempts++;
   charClear(input , indx);
   
-  lcdUrgentTimedUpdate(3);
+  lcdUpdateWithDelay(3 , 2000);
 }
 
 void charClear(char*& arr , byte& size)  // Clears a dynamic array of chars
@@ -396,8 +394,8 @@ void alarm()
         tone(buzz , 800);
       else
         alarmTime = millis();
-    
-    lcdUpdateCheck(7);
+    if(!isLockdown)
+      lcdUpdateCheck(7);
   }
   else
   {
@@ -484,18 +482,18 @@ void lcdTime()  // A function that stops lcd updates for a while
 {
   if(lcdDelayActive)
     {
-      unsigned long long timePassed = millis() - lcdUITime;
+      unsigned long timePassed = millis() - lcdUITime;
 
       if (timePassed >= lcdUIDuration)
         lcdDelayActive = false;
     }
 }
 
-void lcdUrgentTimedUpdate(byte text)  // Some times you need to update lcd immediately, that is when you call that function
+void lcdUpdateWithDelay(byte text , unsigned long duration)  // For text that will be shown for a certain amount of time
 {
   lcdDelayActive = false;
   lcdUpdateCheck(text);
   lcdUITime = millis();
   lcdDelayActive = true;
-  lcdUIDuration = 2000;
+  lcdUIDuration = duration;
 }
