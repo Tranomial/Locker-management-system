@@ -42,5 +42,5 @@ Locker management system for Arduino-controlled smart locker.
 # Contact  
 You can reach me at: [alishouman2006@gmail.com](mailto:alishouman2006@gmail.com)
 
-#Note:
+# Note:
 LCD Ui is not complete yet, stay tuned for future updates
