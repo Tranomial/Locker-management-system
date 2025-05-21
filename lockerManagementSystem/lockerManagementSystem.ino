@@ -65,7 +65,6 @@ void setup()
   pinMode(buzz , OUTPUT);
   pinMode(pot , INPUT);
   lockServo.attach(3);
-  lockServo.write(90);
   lcd.init();
   lcd.backlight();
 
@@ -76,9 +75,9 @@ void setup()
 
 void loop()
 {
-  if(EEPROM.read(0) > 15)  // When starting the safe for the first time take a password from the user to save it
+  if(EEPROM.read(0) > 16)  // When starting the safe for the first time take a password from the user to save it
   {
-    lcdUpdateCheck(1);
+    lcdUpdateRow0(1);
     mode = 3;
   }
   else if (!isPasswordLoaded)  // If the password wasn't loaded before, load it
@@ -98,24 +97,25 @@ void loop()
 
     lockServo.write(lockAngle);  // In mode 0 the safe should always be locked
     if(!isLockdown && !isAlarm)  // Will ask you to insert password if no lockdown or alarm is active
-      lcdUpdateCheck(1);
+      lcdUpdateRow0(1);
   }
 
   else if(mode == 1)
   {
-    lcdUpdateCheck(2);  // In mode 1 always display "Access granted"
+    lcdUpdateRow0(2);  // In mode 1 always display "Access granted"
     lockServo.write(unlockAngle);  // In mode 1 the lock should always be open
   }
 
   else if(mode == 2)
   {
-    lcdUpdateWithDelay(1 , 2000);  // In mode 1 always display "Insert password"
+    lcdDelayActive = false;  // If there is an active lcd delay, cancel it
+    lcdUpdateRow0(1);  // In mode 1 always display "Insert password"
     lockServo.write(unlockAngle);  // Just like in mode 1, the lock should always be open in mode 2
   }
 
   else if(mode == 3)
   {
-    lcdUpdateCheck(1);  // In mode 1 always display "Insert password"
+    lcdUpdateRow0(1);  // In mode 1 always display "Insert password"
     lockServo.write(unlockAngle);  // Again, servo is always open if not in mode 0
   }
   
@@ -131,7 +131,7 @@ void loop()
   }
 
   lockdown();  // If a condition is met lockdown starts
-  lcdTime();  // If a condition is met stop lcd updates
+  lcdTime();  // If a condition is met stop lcd row 0 updates
 }
 
 void takeInput()  // Takes input from user and stores it or acts upon it
@@ -145,8 +145,9 @@ void takeInput()  // Takes input from user and stores it or acts upon it
       {
         if(!isSilent && !isAlarm)
           tone(buzz , 500 , 200);
-      
+        
         charClear(input , indx);
+        lcdClearRow(1);
       }
     }
     
@@ -158,6 +159,7 @@ void takeInput()  // Takes input from user and stores it or acts upon it
           tone(buzz , 500 , 200);
       
         charPopback(input , indx);
+        lcdClearInputChar(indx);
       }
     }
     
@@ -177,7 +179,8 @@ void takeInput()  // Takes input from user and stores it or acts upon it
           mode = 1;
         }
         charClear(input , indx);
-        }
+        lcdClearRow(1);
+      }
     }
       
     else if (key == 'D')  // D locks the safe (only if user has access and the safe door is closed)
@@ -190,6 +193,9 @@ void takeInput()  // Takes input from user and stores it or acts upon it
         
           mode = 0;
           lockServo.write(lockAngle);
+          lcdUpdateWithDelay(0 , 2000);
+          charClear(input , indx);
+          lcdClearRow(1);
     	  }
       
         else
@@ -197,6 +203,8 @@ void takeInput()  // Takes input from user and stores it or acts upon it
           mode = 1;
           tone(buzz , 1250 , 500);
           lcdUpdateWithDelay(5 , 2000);
+          charClear(input , indx);
+          lcdClearRow(1);
         }
     }
     
@@ -217,6 +225,7 @@ void takeInput()  // Takes input from user and stores it or acts upon it
           mode = 1;
           setPassword(input , password , indx , passwordSize);
           charClear(input , indx);
+          lcdClearRow(1);
 
           lcdUpdateWithDelay(6 , 2000);
         }
@@ -228,7 +237,7 @@ void takeInput()  // Takes input from user and stores it or acts upon it
           mode = 1;
           setPassword(input , password , indx , passwordSize);
           charClear(input , indx);
-          
+          lcdClearRow(1);
 
           lcdUpdateWithDelay(6 , 2000);
         }
@@ -258,7 +267,9 @@ void takeInput()  // Takes input from user and stores it or acts upon it
         if(!isSilent && !isAlarm)
             tone(buzz , 1500 , 50);
 
-      charPushback(input , indx , key);
+        lcd.setCursor(indx , 1);
+        lcd.write('*');
+        charPushback(input , indx , key);
       }
       else
         if (!isSilent)  // Different sound to warn the user that he can't insert more characters
@@ -329,6 +340,7 @@ void grantAccess()  // When the user enters the correct password, this function 
   mode = 1;
   
   charClear(input , indx);
+  lcdClearRow(1);
 }
 
 void denyAccess()  // If the user enters the wrong password, this function is called
@@ -338,6 +350,7 @@ void denyAccess()  // If the user enters the wrong password, this function is ca
   
   attempts++;
   charClear(input , indx);
+  lcdClearRow(1);
   
   lcdUpdateWithDelay(3 , 2000);
 }
@@ -353,7 +366,7 @@ void lockdown()  // Activates lockdown when isLockdown is true
 {
   if(isLockdown)
   {
-    lcdUpdateCheck(4);
+    lcdUpdateRow0(4);
 
     byte remainingTime = (millis() - lockdownTime) / 1000;
 
@@ -361,11 +374,16 @@ void lockdown()  // Activates lockdown when isLockdown is true
     {
       if (remainingTime != lastSecond)
       {
-        Serial.println(30 - remainingTime);
+        lcdClearRow(1);
+        lcd.print(30 - remainingTime);
         lastSecond = remainingTime;
       }
     }
-    else isLockdown = false;
+    else
+    {
+    isLockdown = false;
+    lcdClearRow(1);
+    }
   }
 }
 
@@ -395,7 +413,7 @@ void alarm()
       else
         alarmTime = millis();
     if(!isLockdown)
-      lcdUpdateCheck(7);
+      lcdUpdateRow0(7);
   }
   else
   {
@@ -423,13 +441,11 @@ void loadPassword()  // Loads password from EEPROM
     for (int i = 0; i < passwordSize; i++)
     {
       password[i] = EEPROM.read(i + 1);
-      Serial.print(password[i]);
     }
-    Serial.println();
   }
 }
 
-void lcdUpdateCheck(byte nextText)  // Checks if what we have on the lcd different from what we want to display, usefull for avoiding constantly updating lcd
+void lcdUpdateRow0(byte nextText)  // Checks if what we have on the lcd is different from what we want to display, usefull for avoiding constantly updating lcd
 {
   if(lcdDelayActive)
     return;
@@ -438,43 +454,36 @@ void lcdUpdateCheck(byte nextText)  // Checks if what we have on the lcd differe
     return;
   
   currentText = nextText;
-  lcd.clear();
-  Serial.println("Cleared");
+  lcdClearRow(0);
 
-  switch (currentText)
+  switch (currentText)  // Each sentence has its number
   {
     case 0:
+      lcd.print("Safe locked");
       break;
     case 1:
       lcd.print("Insert password");
-      Serial.println("Insert password");
       break;
     case 2:
       lcd.print("Access granted");
-      Serial.println("Access granted");
       break;
     case 3:
       lcd.print("Access denied");
-      Serial.println("Access denied");
       break;
     case 4:
       lcd.print("Lockdown ends in");
-      Serial.println("Lockdown ends in");
       break;
     case 5:
       lcd.print("Close safe");
-      Serial.println("Close safe");
       break;
     case 6:
       lcd.print("Password saved");
-      Serial.println("Password saved");
       break;
     case 7:
       lcd.print("GO AWAY THIEF");
-      Serial.println("GO AWAY THIEF");
       break;
     default:
-      Serial.println("Wrong argument at function lcdUpdate");
+      Serial.println("Wrong argument at function lcdUpdateRow0");
   }
 }
 
@@ -483,7 +492,6 @@ void lcdTime()  // A function that stops lcd updates for a while
   if(lcdDelayActive)
     {
       unsigned long timePassed = millis() - lcdUITime;
-
       if (timePassed >= lcdUIDuration)
         lcdDelayActive = false;
     }
@@ -492,8 +500,23 @@ void lcdTime()  // A function that stops lcd updates for a while
 void lcdUpdateWithDelay(byte text , unsigned long duration)  // For text that will be shown for a certain amount of time
 {
   lcdDelayActive = false;
-  lcdUpdateCheck(text);
+  lcdUpdateRow0(text);
   lcdUITime = millis();
   lcdDelayActive = true;
   lcdUIDuration = duration;
+}
+
+void lcdClearRow(int row)  // This function clears a specified row in the lcd
+{
+  lcd.setCursor(0 , row);
+
+  lcd.print("                ");  // Prints 16 spaces
+  lcd.setCursor(0 , row);
+}
+
+void lcdClearInputChar(int index)  // Erases a character from the lcd
+{
+  lcd.setCursor(index , 1);
+  lcd.write(' ');
+  lcd.setCursor(index , 1);
 }
