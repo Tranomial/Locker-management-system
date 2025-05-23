@@ -95,7 +95,7 @@ void loop()
       isAlarm = true;
     }
 
-    lockServo.write(lockAngle);  // In mode 0 the safe should always be locked
+    servoUpdate(lockServo, lockAngle);  // In mode 0 the safe should always be locked
     if(!isLockdown && !isAlarm)  // Will ask you to insert password if no lockdown or alarm is active
       lcdUpdateRow0(1);
   }
@@ -103,20 +103,20 @@ void loop()
   else if(mode == 1)
   {
     lcdUpdateRow0(2);  // In mode 1 always display "Access granted"
-    lockServo.write(unlockAngle);  // In mode 1 the lock should always be open
+    servoUpdate(lockServo, unlockAngle);  // In mode 1 the lock should always be open
   }
 
   else if(mode == 2)
   {
     lcdDelayActive = false;  // If there is an active lcd delay, cancel it
     lcdUpdateRow0(1);  // In mode 1 always display "Insert password"
-    lockServo.write(unlockAngle);  // Just like in mode 1, the lock should always be open in mode 2
+    servoUpdate(lockServo, unlockAngle);  // Just like in mode 1, the lock should always be open in mode 2
   }
 
   else if(mode == 3)
   {
     lcdUpdateRow0(1);  // In mode 1 always display "Insert password"
-    lockServo.write(unlockAngle);  // Again, servo is always open if not in mode 0
+    servoUpdate(lockServo, unlockAngle);  // Again, servo is always open if not in mode 0
   }
   
   if (!isLockdown)  // Take user input if lockdown isn't active
@@ -192,7 +192,6 @@ void takeInput()  // Takes input from user and stores it or acts upon it
             tone(buzz , 500 , 200);
         
           mode = 0;
-          lockServo.write(lockAngle);
           lcdUpdateWithDelay(0 , 2000);
           charClear(input , indx);
           lcdClearRow(1);
@@ -519,4 +518,10 @@ void lcdClearInputChar(int index)  // Erases a character from the lcd
   lcd.setCursor(index , 1);
   lcd.write(' ');
   lcd.setCursor(index , 1);
+}
+
+void servoUpdate(Servo& someServo, byte angle)  // This function is for avoiding constantly updating the servo
+{
+  if(someServo.read() != angle)
+    someServo.write(angle);
 }
