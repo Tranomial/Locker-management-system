@@ -67,8 +67,6 @@ void setup()
   lockServo.attach(3);
   lcd.init();
   lcd.backlight();
-
-  Serial.begin(9600);
   
   input = nullptr; // Set to null until the user inserts input
 }
@@ -90,7 +88,7 @@ void loop()
 
   if(mode == 0)
   {
-    if(analogRead(pot) > 2)  // If the safe was opened somehow in mode 0 set isAlarm to true
+    if(analogRead(pot) > 9)  // If the safe was opened somehow in mode 0 set isAlarm to true
     {
       isAlarm = true;
     }
@@ -186,7 +184,7 @@ void takeInput()  // Takes input from user and stores it or acts upon it
     else if (key == 'D')  // D locks the safe (only if user has access and the safe door is closed)
     {
       if (mode != 0 && mode != 3)
-        if (analogRead(pot) < 3)
+        if (analogRead(pot) < 5)
     	  {
           if (!isSilent)
             tone(buzz , 500 , 200);
